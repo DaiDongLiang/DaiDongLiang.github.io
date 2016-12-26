@@ -1,0 +1,920 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+  <link href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.css" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.proxy.ustclug.org/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+  
+
+<link href="//cdn.bootcss.com/font-awesome/4.6.2/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="Spring MVC,Ehcache,">
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="MagicWolf" type="application/atom+xml">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0">
+
+
+
+
+
+
+<meta name="description" content="最近为认证系统添加了忘记密码功能，使用了Spring提供的邮件API和Ehchace缓存验证码。整个过程还是挺有趣，值得写一下。
+Spring邮件APISprin提供了一个强大方便的邮件API,简化了发送邮件的工作。可以发送富文本邮件，添加附件，使用模板渲染邮件内容。推荐看Spring实战(第三版)，这里只简单讲一下如何发送富文本邮件，其他的就不细讲了。
+配置邮件发送器Spring邮件API的核心">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spring MVC系列(二) 忘记密码功能实现">
+<meta property="og:url" content="http://magicwolf.xyz/2016/spring-mvc-two/index.html">
+<meta property="og:site_name" content="MagicWolf">
+<meta property="og:description" content="最近为认证系统添加了忘记密码功能，使用了Spring提供的邮件API和Ehchace缓存验证码。整个过程还是挺有趣，值得写一下。
+Spring邮件APISprin提供了一个强大方便的邮件API,简化了发送邮件的工作。可以发送富文本邮件，添加附件，使用模板渲染邮件内容。推荐看Spring实战(第三版)，这里只简单讲一下如何发送富文本邮件，其他的就不细讲了。
+配置邮件发送器Spring邮件API的核心">
+<meta property="og:updated_time" content="2016-12-26T12:57:04.256Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spring MVC系列(二) 忘记密码功能实现">
+<meta name="twitter:description" content="最近为认证系统添加了忘记密码功能，使用了Spring提供的邮件API和Ehchace缓存验证码。整个过程还是挺有趣，值得写一下。
+Spring邮件APISprin提供了一个强大方便的邮件API,简化了发送邮件的工作。可以发送富文本邮件，添加附件，使用模板渲染邮件内容。推荐看Spring实战(第三版)，这里只简单讲一下如何发送富文本邮件，其他的就不细讲了。
+配置邮件发送器Spring邮件API的核心">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://magicwolf.xyz/2016/spring-mvc-two/">
+
+
+
+
+
+  <title> Spring MVC系列(二) 忘记密码功能实现 | MagicWolf </title>
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?9a28bad7a399151acdd7fdc4922ea9a4";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">MagicWolf</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="st-search-show-outputs">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <form class="site-search-form">
+  <input type="text" id="st-search-input" class="st-search-input st-default-search-input">
+</form>
+
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+    (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+    e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install', 'tNMsDqpSk-yV5ftDkg1X','2.0.0');
+</script>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://magicwolf.xyz/2016/spring-mvc-two/">
+
+  <span style="display:none" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="MagicWolf">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.png">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="MagicWolf">
+    <span style="display:none" itemprop="logo" itemscope="" itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="MagicWolf" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Spring MVC系列(二) 忘记密码功能实现
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-04-29T00:00:00+08:00">
+                2016-04-29
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+              <span class="post-meta-divider">|</span>
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <a href="/2016/spring-mvc-two/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/spring-mvc-two/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/spring-mvc-two/" class="leancloud_visitors" data-flag-title="Spring MVC系列(二) 忘记密码功能实现">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>最近为认证系统添加了忘记密码功能，使用了Spring提供的邮件API和Ehchace缓存验证码。整个过程还是挺有趣，值得写一下。</p>
+<h2 id="Spring邮件API"><a href="#Spring邮件API" class="headerlink" title="Spring邮件API"></a>Spring邮件API</h2><p>Sprin提供了一个强大方便的邮件API,简化了发送邮件的工作。可以发送富文本邮件，添加附件，使用模板渲染邮件内容。推荐看<strong>Spring实战(第三版)</strong>，这里只简单讲一下如何发送富文本邮件，其他的就不细讲了。</p>
+<h3 id="配置邮件发送器"><a href="#配置邮件发送器" class="headerlink" title="配置邮件发送器"></a>配置邮件发送器</h3><p>Spring邮件API的核心是<code>MailSender</code>接口，Spring自带<code>JavaMailSenderImpl</code>实现了<code>MailSender</code>接口，所以需要将<code>JavaMailSenderImpl</code>装配到Bean中。</p>
+<a id="more"></a>
+<h4 id="Mail-xml"><a href="#Mail-xml" class="headerlink" title="Mail.xml"></a>Mail.xml</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div></pre></td><td class="code"><pre><div class="line">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</div><div class="line"><span class="tag">&lt;<span class="name">beans</span> <span class="attr">xmlns</span>=<span class="string">"http://www.springframework.org/schema/beans"</span></span></div><div class="line">	<span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span> <span class="attr">xmlns:context</span>=<span class="string">"http://www.springframework.org/schema/context"</span></div><div class="line">	<span class="attr">xsi:schemaLocation</span>=<span class="string">"http://www.springframework.org/schema/beans</span></div><div class="line">        http://www.springframework.org/schema/beans/spring-beans.xsd</div><div class="line">        http://www.springframework.org/schema/context</div><div class="line">        http://www.springframework.org/schema/context/spring-context.xsd"&gt;</div><div class="line"></div><div class="line">    <span class="comment">&lt;!--读取外部属性文件--&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">"propertyConfigurer"</span> <span class="attr">class</span>=<span class="string">"org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"</span>&gt;</span></div><div class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"locations"</span>&gt;</span></div><div class="line">			<span class="tag">&lt;<span class="name">list</span>&gt;</span></div><div class="line">				<span class="tag">&lt;<span class="name">value</span>&gt;</span>classpath:Mail.properties<span class="tag">&lt;/<span class="name">value</span>&gt;</span></div><div class="line">			<span class="tag">&lt;/<span class="name">list</span>&gt;</span></div><div class="line">		<span class="tag">&lt;/<span class="name">property</span>&gt;</span></div><div class="line">	<span class="tag">&lt;/<span class="name">bean</span>&gt;</span></div><div class="line">    <span class="comment">&lt;!--配置了mailSender--&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">"mailSender"</span> <span class="attr">class</span>=<span class="string">"org.springframework.mail.javamail.JavaMailSenderImpl"</span>&gt;</span></div><div class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"host"</span> <span class="attr">value</span>=<span class="string">"$&#123;mail.host&#125;"</span> /&gt;</span></div><div class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"port"</span> <span class="attr">value</span>=<span class="string">"$&#123;mail.port&#125;"</span>&gt;</span><span class="tag">&lt;/<span class="name">property</span>&gt;</span></div><div class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"username"</span> <span class="attr">value</span>=<span class="string">"$&#123;mail.username&#125;"</span> /&gt;</span></div><div class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"password"</span> <span class="attr">value</span>=<span class="string">"$&#123;mail.password&#125;"</span> /&gt;</span></div><div class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"defaultEncoding"</span> <span class="attr">value</span>=<span class="string">"UTF-8"</span>&gt;</span><span class="tag">&lt;/<span class="name">property</span>&gt;</span></div><div class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"javaMailProperties"</span>&gt;</span></div><div class="line">			<span class="tag">&lt;<span class="name">props</span>&gt;</span></div><div class="line">				<span class="tag">&lt;<span class="name">prop</span> <span class="attr">key</span>=<span class="string">"mail.smtp.auth"</span>&gt;</span>$&#123;mail.smtp.auth&#125;<span class="tag">&lt;/<span class="name">prop</span>&gt;</span></div><div class="line">				<span class="tag">&lt;<span class="name">prop</span> <span class="attr">key</span>=<span class="string">"mail.smtp.timeout"</span>&gt;</span>$&#123;mail.smtp.timeout&#125;<span class="tag">&lt;/<span class="name">prop</span>&gt;</span></div><div class="line">			<span class="tag">&lt;/<span class="name">props</span>&gt;</span></div><div class="line">		<span class="tag">&lt;/<span class="name">property</span>&gt;</span></div><div class="line">	<span class="tag">&lt;/<span class="name">bean</span>&gt;</span></div><div class="line"></div><div class="line"><span class="tag">&lt;/<span class="name">beans</span>&gt;</span></div></pre></td></tr></table></figure>
+<h3 id="Mail-properties"><a href="#Mail-properties" class="headerlink" title="Mail.properties"></a>Mail.properties</h3><p>使用QQ的邮件服务器，需要在QQ邮箱设置中开启STMP服务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">mail.from=dai.dongliang@foxmail.com</div><div class="line">mail.host=smtp.qq.com</div><div class="line">mail.port=25</div><div class="line">mail.username=675742730  </div><div class="line">mail.password=*********</div><div class="line">mail.smtp.auth=true  </div><div class="line">mail.smtp.timeout=25000</div></pre></td></tr></table></figure>
+<h3 id="Main-Java"><a href="#Main-Java" class="headerlink" title="Main.Java"></a>Main.Java</h3><p>这只是简单的构造了一个带有链接的邮件，其他更复杂的用法就不介绍了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Main</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</div><div class="line">        ApplicationContext context = <span class="keyword">new</span> ClassPathXmlApplicationContext( <span class="string">"Mail.xml"</span>);</div><div class="line">        JavaMailSenderImpl sender = (JavaMailSenderImpl)context.getBean(<span class="string">"mailSender"</span>);</div><div class="line">        <span class="comment">//构建邮件</span></div><div class="line">        MimeMessage message=sender.createMimeMessage();</div><div class="line">        <span class="keyword">try</span> &#123;</div><div class="line">            <span class="comment">//使用MimeMessageHelper构建Mime类型邮件</span></div><div class="line">            MimeMessageHelper helper= <span class="keyword">new</span> MimeMessageHelper(message,<span class="keyword">true</span>);</div><div class="line">            helper.setFrom(<span class="string">"dai.dongliang@foxmail.com"</span>);</div><div class="line">            helper.setTo(<span class="string">"xxxxxxx@foxmail.com"</span>);</div><div class="line">            message.setSubject(<span class="string">"Spring Mail Test"</span>);</div><div class="line">            <span class="comment">//第二个参数true表明信息类型是multipart类型</span></div><div class="line">            helper.setText(<span class="string">"&lt;a href=\"http://www.magicwolf.xyz\"&gt;你好&lt;/a&gt;"</span>,<span class="keyword">true</span>);</div><div class="line">            sender.send(message);</div><div class="line">        &#125; <span class="keyword">catch</span> (MessagingException e) &#123;</div><div class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> RuntimeException(<span class="string">"邮件构造失败"</span>);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>至此一封邮件就发送出去了，可以坐等收件人查看了。</p>
+<h2 id="Ehcache缓存"><a href="#Ehcache缓存" class="headerlink" title="Ehcache缓存"></a>Ehcache缓存</h2><p>Spring中内置了对Ehcache的支持，封装了<code>EhCacheCacheManager</code>，可以很方便的使用Ehcache。</p>
+<h3 id="配置CacheManager"><a href="#配置CacheManager" class="headerlink" title="配置CacheManager"></a>配置CacheManager</h3><figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</div><div class="line"><span class="tag">&lt;<span class="name">beans</span> <span class="attr">xmlns</span>=<span class="string">"http://www.springframework.org/schema/beans"</span></span></div><div class="line">	<span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span> <span class="attr">xmlns:p</span>=<span class="string">"http://www.springframework.org/schema/p"</span></div><div class="line">	<span class="attr">xmlns:context</span>=<span class="string">"http://www.springframework.org/schema/context"</span></div><div class="line">	<span class="attr">xmlns:cache</span>=<span class="string">"http://www.springframework.org/schema/cache"</span></div><div class="line">	<span class="attr">xsi:schemaLocation</span>=<span class="string">"</span></div><div class="line">        http://www.springframework.org/schema/beans</div><div class="line">        http://www.springframework.org/schema/beans/spring-beans.xsd</div><div class="line">        http://www.springframework.org/schema/context</div><div class="line">        http://www.springframework.org/schema/context/spring-context.xsd"&gt;</div><div class="line">    </div><div class="line">    <span class="comment">&lt;!--配置cacheManager--&gt;</span>    </div><div class="line">	<span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">"cacheManager"</span> <span class="attr">class</span>=<span class="string">"org.springframework.cache.ehcache.EhCacheCacheManager"</span></span></div><div class="line">		<span class="attr">p:cache-manager-ref</span>=<span class="string">"ehcache"</span> /&gt;</div><div class="line"></div><div class="line">	<span class="comment">&lt;!-- EhCache library setup --&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">"ehcache"</span></span></div><div class="line">		<span class="attr">class</span>=<span class="string">"org.springframework.cache.ehcache.EhCacheManagerFactoryBean"</span></div><div class="line">		<span class="attr">p:config-location</span>=<span class="string">"classpath:ehcache.xml"</span> /&gt;</div><div class="line"><span class="tag">&lt;/<span class="name">beans</span>&gt;</span></div></pre></td></tr></table></figure>
+<h3 id="ehcache-xml"><a href="#ehcache-xml" class="headerlink" title="ehcache.xml"></a>ehcache.xml</h3><p>Ehcache的配置文件，这里配置一个名为CodeCache的chahe用于保存验证码。<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</div><div class="line"><span class="tag">&lt;<span class="name">ehcache</span> <span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span></span></div><div class="line">	<span class="attr">xsi:noNamespaceSchemaLocation</span>=<span class="string">"ehcache.xsd"</span>&gt;</div><div class="line">	<span class="tag">&lt;<span class="name">diskStore</span> <span class="attr">path</span>=<span class="string">"java.io.tmpdir"</span> /&gt;</span></div><div class="line">	<span class="comment">&lt;!-- 配置自定义缓存 </span></div><div class="line">	    name：Cache的名称，必须是唯一的(ehcache会把这个cache放到HashMap里)。 </div><div class="line">		maxElementsInMemory：内存中保持的对象数量。 </div><div class="line">		maxElementsOnDisk：DiskStore中保持的对象数量，默认值为0，表示不限制。 </div><div class="line">		eternal：是否是永恒数据，如果是，则它的超时设置会被忽略。 </div><div class="line">		overflowToDisk：如果内存中数据数量超过maxElementsInMemory限制，是否要缓存到磁盘上。 </div><div class="line">		timeToIdleSeconds：对象空闲时间，指对象在多长时间没有被访问就会失效。只对eternal为false的有效。默认值0，表示一直可以访问。 </div><div class="line">		timeToLiveSeconds：对象存活时间，指对象从创建到失效所需要的时间。只对eternal为false的有效。默认值0，表示一直可以访问。 </div><div class="line">		diskPersistent：是否在磁盘上持久化。指重启jvm后，数据是否有效。默认为false。 </div><div class="line">		diskExpiryThreadIntervalSeconds：对象检测线程运行时间间隔。标识对象状态的线程多长时间运行一次。 </div><div class="line">		diskSpoolBufferSizeMB：DiskStore使用的磁盘大小，默认值30MB。每个cache使用各自的DiskStore。 </div><div class="line">		memoryStoreEvictionPolicy：如果内存中数据超过内存限制，向磁盘缓存时的策略。默认值LRU，可选FIFO、LFU。 </div><div class="line">	    --&gt;</div><div class="line"></div><div class="line">	  <span class="tag">&lt;<span class="name">cache</span> <span class="attr">name</span>=<span class="string">"CodeCache"</span> </span></div><div class="line">       <span class="attr">maxElementsInMemory</span>=<span class="string">"10000"</span></div><div class="line">       <span class="attr">eternal</span>=<span class="string">"false"</span> </div><div class="line">       <span class="attr">overflowToDisk</span>=<span class="string">"false"</span> </div><div class="line">       <span class="attr">timeToIdleSeconds</span>=<span class="string">"300"</span></div><div class="line">       <span class="attr">timeToLiveSeconds</span>=<span class="string">"300"</span> </div><div class="line">       <span class="attr">memoryStoreEvictionPolicy</span>=<span class="string">"LFU"</span> /&gt;</div><div class="line"></div><div class="line"><span class="tag">&lt;/<span class="name">ehcache</span>&gt;</span></div></pre></td></tr></table></figure></p>
+<h3 id="Main-java"><a href="#Main-java" class="headerlink" title="Main.java"></a>Main.java</h3><p>Ehcache的基本用法。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Main</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</div><div class="line">        ApplicationContext context = <span class="keyword">new</span> ClassPathXmlApplicationContext( <span class="string">"auth-cache.xml"</span>);</div><div class="line">        <span class="comment">//得到缓存管理器</span></div><div class="line">        EhCacheCacheManager cacheManager = (EhCacheCacheManager)context.getBean(<span class="string">"cacheManager"</span>);</div><div class="line">        <span class="comment">//得到Cache</span></div><div class="line">        Cache cache = cacheManager.getCache(<span class="string">"CodeCache"</span>);</div><div class="line">        <span class="comment">//存入缓存，这里是验证码对应用户名</span></div><div class="line">        cache.put(<span class="string">"123"</span>,<span class="string">"magicwolf"</span>);</div><div class="line">        <span class="comment">//取出缓存</span></div><div class="line">        System.out.println(cache.get(<span class="string">"123"</span>,String.class));</div><div class="line">        <span class="comment">//删除缓存</span></div><div class="line">        cache.evict(<span class="string">"123"</span>);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h2 id="忘记密码功能实现"><a href="#忘记密码功能实现" class="headerlink" title="忘记密码功能实现"></a>忘记密码功能实现</h2><p>上面已经把关键点介绍了，剩余的就是如何组织代码，设计密码找回流程。代码很简单就不贴出了。</p>
+<h3 id="1-显示忘记密码页面"><a href="#1-显示忘记密码页面" class="headerlink" title="1. 显示忘记密码页面"></a>1. 显示忘记密码页面</h3><p>一个简单的表单页面，输入用户名和一个60秒刷新一次的验证码。  </p>
+<ul>
+<li>需要验证用户名是否存在，邮箱是否已填写。</li>
+<li>60秒刷新的验证码防止恶意重置密码。</li>
+<li>60秒刷新的验证码实现方式有很多，可以把时间信息存在session或cookie或Ehcache中。</li>
+</ul>
+<h3 id="2-发送邮件，缓存重置密码令牌。"><a href="#2-发送邮件，缓存重置密码令牌。" class="headerlink" title="2. 发送邮件，缓存重置密码令牌。"></a>2. 发送邮件，缓存重置密码令牌。</h3><ul>
+<li>生成一个5分钟内有效的令牌，将令牌和用户id映射保存在Ehcache中。</li>
+<li>用令牌值组成重置邮件链接。</li>
+<li>从数据库取出邮件地址并发送邮件。</li>
+</ul>
+<h3 id="3-重置密码"><a href="#3-重置密码" class="headerlink" title="3. 重置密码"></a>3. 重置密码</h3><ul>
+<li>用户点击链接进入重置密码界面。</li>
+<li>验证令牌值，并得到用户Id,定位到具体用户。</li>
+<li>用户修改密码。</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>忘记密码功能实现起来比较简单，但是如何设计一个严密的密码找回功能很麻烦。现在这个流程就很薄弱，容易受到攻击。等后面有时间了再来仔细研究一下，添加一些验证条件，比如密保问题，手机号验证这些。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Spring-MVC/" rel="tag"># Spring MVC</a>
+          
+            <a href="/tags/Ehcache/" rel="tag"># Ehcache</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/spring-mvc-one/" rel="next" title="Spring MVC系列（一）利用切面编程进行加密">
+                <i class="fa fa-chevron-left"></i> Spring MVC系列（一）利用切面编程进行加密
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2016/spring-mvc-two/" data-title="Spring MVC系列(二) 忘记密码功能实现" data-content="" data-url="http://magicwolf.xyz/2016/spring-mvc-two/">
+  <div class="ds-share-inline">
+    <ul class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qq" href="javascript:void(0);" data-service="qq">QQ</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/spring-mvc-two/" data-title="Spring MVC系列(二) 忘记密码功能实现" data-url="http://magicwolf.xyz/2016/spring-mvc-two/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image" src="/images/avatar.png" alt="MagicWolf">
+          <p class="site-author-name" itemprop="name">MagicWolf</p>
+          <p class="site-description motion-element" itemprop="description">在代码中享受创造的乐趣~</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">2</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+              <div class="site-state-item site-state-categories">
+                  <a href="/categories">
+                      <span class="site-state-item-count">1</span>
+                      <span class="site-state-item-name">分类</span>
+                  </a>
+              </div>
+          
+          
+          
+              <div class="site-state-item site-state-tags">
+                  <a href="/tags">
+                      <span class="site-state-item-count">3</span>
+                      <span class="site-state-item-name">标签</span>
+                  </a>
+              </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/DaiDongLiang" target="_blank" title="GitHub" rel="external nofollow noopener noreferrer">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Spring邮件API"><span class="nav-number">1.</span> <span class="nav-text">Spring邮件API</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#配置邮件发送器"><span class="nav-number">1.1.</span> <span class="nav-text">配置邮件发送器</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Mail-xml"><span class="nav-number">1.1.1.</span> <span class="nav-text">Mail.xml</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Mail-properties"><span class="nav-number">1.2.</span> <span class="nav-text">Mail.properties</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Main-Java"><span class="nav-number">1.3.</span> <span class="nav-text">Main.Java</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Ehcache缓存"><span class="nav-number">2.</span> <span class="nav-text">Ehcache缓存</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#配置CacheManager"><span class="nav-number">2.1.</span> <span class="nav-text">配置CacheManager</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ehcache-xml"><span class="nav-number">2.2.</span> <span class="nav-text">ehcache.xml</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Main-java"><span class="nav-number">2.3.</span> <span class="nav-text">Main.java</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#忘记密码功能实现"><span class="nav-number">3.</span> <span class="nav-text">忘记密码功能实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-显示忘记密码页面"><span class="nav-number">3.1.</span> <span class="nav-text">1. 显示忘记密码页面</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-发送邮件，缓存重置密码令牌。"><span class="nav-number">3.2.</span> <span class="nav-text">2. 发送邮件，缓存重置密码令牌。</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-重置密码"><span class="nav-number">3.3.</span> <span class="nav-text">3. 重置密码</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">MagicWolf</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io" rel="external nofollow noopener noreferrer" target="_blank">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next" rel="external nofollow noopener noreferrer" target="_blank">
+    NexT.Pisces
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/jquery/2.1.3/jquery.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/jquery_lazyload/1.9.7/jquery.lazyload.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/velocity/1.2.1/velocity.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/velocity/1.2.1/velocity.ui.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"magicalwolf"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    
+    <script src="//cdn.jsdelivr.net/ua-parser.js/0.7.10/ua-parser.min.js"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("knVPNUlwucTQYXEmwa1tLDU2-gzGzoHsz", "w0xPFXzCBO1n84n7YJvXOVCS");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+
+</body>
+</html>
