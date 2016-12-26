@@ -4,8 +4,28 @@
 
     
   <url>
+    <loc>http://magicwolf.xyz/2016/spring-mvc-three/</loc>
+    <lastmod>2016-12-26T13:26:30.572Z</lastmod>
+    <data>
+        <display>
+        <title>Spring MVC系列(三) 基于注解的权限控制</title>
+        <pubTime>2016-05-09T16:00:00.000Z</pubTime>
+        
+        <tag>Spring MVC</tag>
+         
+         
+           
+             
+              <breadCrumb title="Java" url="http://magicwolf.xyz/categories/Java/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
     <loc>http://magicwolf.xyz/2016/spring-mvc-two/</loc>
-    <lastmod>2016-12-26T12:57:04.256Z</lastmod>
+    <lastmod>2016-12-26T13:15:05.666Z</lastmod>
     <data>
         <display>
         <title>Spring MVC系列(二) 忘记密码功能实现</title>
