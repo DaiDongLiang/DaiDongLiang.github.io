@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  
+  <url>
+    <loc>http://magicwolf.xyz/about/index.html</loc>
+    
+    <lastmod>2016-12-26T11:06:06.339Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://magicwolf.xyz/categories/index.html</loc>
+    
+    <lastmod>2016-12-21T12:41:58.777Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://magicwolf.xyz/tags/index.html</loc>
+    
+    <lastmod>2016-12-21T12:41:26.433Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://magicwolf.xyz/2016/12/18/spring-mvc-one/</loc>
+    
+    <lastmod>2016-12-20T09:50:01.041Z</lastmod>
+    
+  </url>
+  
+</urlset>
