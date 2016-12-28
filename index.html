@@ -626,7 +626,7 @@
               
                 
                 <a class="post-title-link" href="/2016/tomcat-src-one/" itemprop="url">
-                  Spring MVC系列(二) 忘记密码功能实现
+                  Tomcat源码分析(一) HTTP协议解析
                 </a>
               
             
@@ -685,7 +685,7 @@
 
           
           
-             <span id="/2016/tomcat-src-one/" class="leancloud_visitors" data-flag-title="Spring MVC系列(二) 忘记密码功能实现">
+             <span id="/2016/tomcat-src-one/" class="leancloud_visitors" data-flag-title="Tomcat源码分析(一) HTTP协议解析">
                <span class="post-meta-divider">|</span>
                <span class="post-meta-item-icon">
                  <i class="fa fa-eye"></i>
@@ -711,7 +711,7 @@
 
       
         
-          <h1 id="Tomcat源码分析-一-：HTTP协议解析"><a href="#Tomcat源码分析-一-：HTTP协议解析" class="headerlink" title="Tomcat源码分析(一)：HTTP协议解析"></a>Tomcat源码分析(一)：HTTP协议解析</h1><p>前几天面试阿里，面试官问我如何解析HTTP协议，我大概说了一下的思路，他最后得出的结论是我对HTTP协议不了解，让我很受打击。回来看《深入剖析Tomcat》，研究一下Tomcat是如何解析HTTP协议的</p>
+          <p>前几天面试阿里，面试官问我如何解析HTTP协议，我大概说了一下的思路，他最后得出的结论是我对HTTP协议不了解，让我很受打击。回来看《深入剖析Tomcat》，研究一下Tomcat是如何解析HTTP协议的</p>
 <h2 id="1-环境说明"><a href="#1-环境说明" class="headerlink" title="1. 环境说明"></a>1. 环境说明</h2><ul>
 <li>《深入剖析Tomcat》是基于<code>tomcat-4.1.12</code>进行分析，这个版本在2002年发布,可以说是老古董了。不过就学习而言还是很好的工具.</li>
 <li>Http协议的解析在连接器(connector) 中进行，连接器是一个独立的模块，可以被插入到容器中，<code>tomcat-4.1.12</code>里提供了默认连接器，但已被标注为过时。</li>

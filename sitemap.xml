@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://magicwolf.xyz/2016/tomcat-src-one/</loc>
+    
+    <lastmod>2016-12-28T13:10:24.075Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://magicwolf.xyz/2016/spring-aop-one/</loc>
     
     <lastmod>2016-12-28T13:03:23.636Z</lastmod>
@@ -12,13 +19,6 @@
     <loc>http://magicwolf.xyz/2016/spring-aop-two/</loc>
     
     <lastmod>2016-12-28T13:03:13.761Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://magicwolf.xyz/2016/tomcat-src-one/</loc>
-    
-    <lastmod>2016-12-28T13:02:03.553Z</lastmod>
     
   </url>
   
