@@ -1,0 +1,923 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+  <link href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.css" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.proxy.ustclug.org/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+  
+
+<link href="//cdn.bootcss.com/font-awesome/4.6.2/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="Tomcat,HTTP,">
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="MagicWolf" type="application/atom+xml">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0">
+
+
+
+
+
+
+<meta name="description" content="Tomcat源码分析(一)：HTTP协议解析前几天面试阿里，面试官问我如何解析HTTP协议，我大概说了一下的思路，他最后得出的结论是我对HTTP协议不了解，让我很受打击。回来看《深入剖析Tomcat》，研究一下Tomcat是如何解析HTTP协议的
+1. 环境说明
+《深入剖析Tomcat》是基于tomcat-4.1.12进行分析，这个版本在2002年发布,可以说是老古董了。不过就学习而言还是很好的工">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spring MVC系列(二) 忘记密码功能实现">
+<meta property="og:url" content="http://magicwolf.xyz/2016/tomcat-src-one/index.html">
+<meta property="og:site_name" content="MagicWolf">
+<meta property="og:description" content="Tomcat源码分析(一)：HTTP协议解析前几天面试阿里，面试官问我如何解析HTTP协议，我大概说了一下的思路，他最后得出的结论是我对HTTP协议不了解，让我很受打击。回来看《深入剖析Tomcat》，研究一下Tomcat是如何解析HTTP协议的
+1. 环境说明
+《深入剖析Tomcat》是基于tomcat-4.1.12进行分析，这个版本在2002年发布,可以说是老古董了。不过就学习而言还是很好的工">
+<meta property="og:updated_time" content="2016-12-28T13:02:03.553Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spring MVC系列(二) 忘记密码功能实现">
+<meta name="twitter:description" content="Tomcat源码分析(一)：HTTP协议解析前几天面试阿里，面试官问我如何解析HTTP协议，我大概说了一下的思路，他最后得出的结论是我对HTTP协议不了解，让我很受打击。回来看《深入剖析Tomcat》，研究一下Tomcat是如何解析HTTP协议的
+1. 环境说明
+《深入剖析Tomcat》是基于tomcat-4.1.12进行分析，这个版本在2002年发布,可以说是老古董了。不过就学习而言还是很好的工">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://magicwolf.xyz/2016/tomcat-src-one/">
+
+
+
+
+
+  <title> Spring MVC系列(二) 忘记密码功能实现 | MagicWolf </title>
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?9a28bad7a399151acdd7fdc4922ea9a4";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">MagicWolf</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="st-search-show-outputs">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <form class="site-search-form">
+  <input type="text" id="st-search-input" class="st-search-input st-default-search-input">
+</form>
+
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+    (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+    e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install', 'tNMsDqpSk-yV5ftDkg1X','2.0.0');
+</script>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://magicwolf.xyz/2016/tomcat-src-one/">
+
+  <span style="display:none" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="MagicWolf">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.png">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="MagicWolf">
+    <span style="display:none" itemprop="logo" itemscope="" itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="MagicWolf" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Spring MVC系列(二) 忘记密码功能实现
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-05-24T00:00:00+08:00">
+                2016-05-24
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+              <span class="post-meta-divider">|</span>
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/源码分析/" itemprop="url" rel="index">
+                    <span itemprop="name">源码分析</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <a href="/2016/tomcat-src-one/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/tomcat-src-one/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/tomcat-src-one/" class="leancloud_visitors" data-flag-title="Spring MVC系列(二) 忘记密码功能实现">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="Tomcat源码分析-一-：HTTP协议解析"><a href="#Tomcat源码分析-一-：HTTP协议解析" class="headerlink" title="Tomcat源码分析(一)：HTTP协议解析"></a>Tomcat源码分析(一)：HTTP协议解析</h1><p>前几天面试阿里，面试官问我如何解析HTTP协议，我大概说了一下的思路，他最后得出的结论是我对HTTP协议不了解，让我很受打击。回来看《深入剖析Tomcat》，研究一下Tomcat是如何解析HTTP协议的</p>
+<h2 id="1-环境说明"><a href="#1-环境说明" class="headerlink" title="1. 环境说明"></a>1. 环境说明</h2><ul>
+<li>《深入剖析Tomcat》是基于<code>tomcat-4.1.12</code>进行分析，这个版本在2002年发布,可以说是老古董了。不过就学习而言还是很好的工具.</li>
+<li>Http协议的解析在连接器(connector) 中进行，连接器是一个独立的模块，可以被插入到容器中，<code>tomcat-4.1.12</code>里提供了默认连接器，但已被标注为过时。</li>
+</ul>
+<a id="more"></a>
+<h2 id="2-源码分析"><a href="#2-源码分析" class="headerlink" title="2. 源码分析"></a>2. 源码分析</h2><h3 id="2-1-连接器"><a href="#2-1-连接器" class="headerlink" title="2.1 连接器"></a>2.1 连接器</h3><p>默认连接器在<code>org.apache.catalina.connector.http</code>包下,它实现了<code>Connector</code>接口和<code>Runnable</code>接口。分析的入口在<code>run</code>方法中</p>
+<h4 id="2-1-1-run"><a href="#2-1-1-run" class="headerlink" title="2.1.1 run()"></a>2.1.1 run()</h4><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div></pre></td><td class="code"><pre><div class="line">public void run() &#123;</div><div class="line">    while (!stopped) &#123;</div><div class="line">        //从ServerSocket中接受下一个进入的连接</div><div class="line">        Socket socket = null;</div><div class="line">        try &#123;</div><div class="line">            serverSocket.accept()");</div><div class="line">            socket = serverSocket.accept();</div><div class="line">            if (connectionTimeout &gt; 0)</div><div class="line">                socket.setSoTimeout(connectionTimeout);</div><div class="line">            socket.setTcpNoDelay(tcpNoDelay);//这个有点意思，关闭TCP延迟确认</div><div class="line">        &#125; catch (AccessControlException ace) &#123;</div><div class="line">            log("socket accept security exception", ace);</div><div class="line">            continue;</div><div class="line">        &#125; catch (IOException e) &#123;</div><div class="line">            try &#123;</div><div class="line">                // 如果重新打开失败，退出</div><div class="line">                synchronized (threadSync) &#123;</div><div class="line">                    if (started &amp;&amp; !stopped)</div><div class="line">                        log("accept error: ", e);</div><div class="line">                    if (!stopped) &#123;</div><div class="line">                        serverSocket.close();</div><div class="line">                        serverSocket = open();</div><div class="line">                    &#125;</div><div class="line">                &#125;</div><div class="line">            &#125; catch (IOException ioe) &#123;</div><div class="line">                log("socket reopen, io problem: ", ioe);</div><div class="line">                break;</div><div class="line">            &#125; catch (KeyStoreException kse) &#123;</div><div class="line">                log("socket reopen, keystore problem: ", kse);</div><div class="line">                break;</div><div class="line">            &#125; catch (NoSuchAlgorithmException nsae) &#123;</div><div class="line">                log("socket reopen, keystore algorithm problem: ", nsae);</div><div class="line">                break;</div><div class="line">            &#125; catch (CertificateException ce) &#123;</div><div class="line">                log("socket reopen, certificate problem: ", ce);</div><div class="line">                break;</div><div class="line">            &#125; catch (UnrecoverableKeyException uke) &#123;</div><div class="line">                log("socket reopen, unrecoverable key: ", uke);</div><div class="line">                break;</div><div class="line">            &#125; catch (KeyManagementException kme) &#123;</div><div class="line">                log("socket reopen, key management problem: ", kme);</div><div class="line">                break;</div><div class="line">            &#125;</div><div class="line">            continue;</div><div class="line">        &#125;</div><div class="line">        // 把socket给适当的处理器</div><div class="line">        HttpProcessor processor = createProcessor();//2.1.2</div><div class="line">        if (processor == null) &#123;</div><div class="line">            try &#123;</div><div class="line">                log(sm.getString("httpConnector.noProcessor"));</div><div class="line">                socket.close();</div><div class="line">            &#125; catch (IOException e) &#123;</div><div class="line">                ;</div><div class="line">            &#125;</div><div class="line">            continue;</div><div class="line">        &#125;</div><div class="line">        processor.assign(socket);//2.2.3</div><div class="line">        // The processor will recycle itself when it finishes</div><div class="line">    &#125;</div><div class="line">    synchronized (threadSync) &#123;</div><div class="line">        threadSync.notifyAll();</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="2-1-2-createProcessor"><a href="#2-1-2-createProcessor" class="headerlink" title="2.1.2 createProcessor()"></a>2.1.2 createProcessor()</h4><p>具体的处理将在<code>HttpProcessor</code>中进行，一个连接器会创建多个处理器,连接器的数量通过<code>maxProcessors</code>和<code>minProcessors</code>进行控制。今天的重点在http协议的解析，创建<code>HttpProcessor</code>的一些细节就不说了<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">private</span> HttpProcessor <span class="title">createProcessor</span><span class="params">()</span> </span>&#123;</div><div class="line">    <span class="keyword">synchronized</span> (processors) &#123;</div><div class="line">        <span class="keyword">if</span> (processors.size() &gt; <span class="number">0</span>) &#123;</div><div class="line">            <span class="keyword">return</span> ((HttpProcessor) processors.pop());</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">if</span> ((maxProcessors &gt; <span class="number">0</span>) &amp;&amp; (curProcessors &lt; maxProcessors)) &#123;</div><div class="line">            <span class="keyword">return</span> (newProcessor());</div><div class="line">        &#125; <span class="keyword">else</span> &#123;</div><div class="line">            <span class="keyword">if</span> (maxProcessors &lt; <span class="number">0</span>) &#123;</div><div class="line">                <span class="keyword">return</span> (newProcessor());</div><div class="line">            &#125; <span class="keyword">else</span> &#123;</div><div class="line">                <span class="keyword">return</span> (<span class="keyword">null</span>);</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h3 id="2-2-处理器"><a href="#2-2-处理器" class="headerlink" title="2.2 处理器"></a>2.2 处理器</h3><p><code>HttpProcessor</code>在独立的线程中对请求进行处理，连接器将请求分配给处理器(调用处理器的<code>assign()</code>方法)，处理器处理完成后将进行回收重复利用</p>
+<h4 id="2-2-1-run"><a href="#2-2-1-run" class="headerlink" title="2.2.1 run()"></a>2.2.1 run()</h4><p><code>HttpProcessor</code>同样实现了<code>Runnable</code>接口，在后台一直运行(被设置为守护线程)，等待处理请求<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">    <span class="keyword">while</span> (!stopped) &#123;</div><div class="line">        <span class="comment">// 等待下一个socket</span></div><div class="line">        Socket socket = await();<span class="comment">//2.2.2</span></div><div class="line">        <span class="keyword">if</span> (socket == <span class="keyword">null</span>)</div><div class="line">            <span class="keyword">continue</span>;</div><div class="line">        <span class="comment">// 处理请求</span></div><div class="line">        <span class="keyword">try</span> &#123;</div><div class="line">            process(socket);<span class="comment">//2.2.4</span></div><div class="line">        &#125; <span class="keyword">catch</span> (Throwable t) &#123;</div><div class="line">            log(<span class="string">"process.invoke"</span>, t);</div><div class="line">        &#125;</div><div class="line">        <span class="comment">// 完成此次请求</span></div><div class="line">        connector.recycle(<span class="keyword">this</span>);</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">synchronized</span> (threadSync) &#123;</div><div class="line">        threadSync.notifyAll();</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h4 id="2-2-2-await"><a href="#2-2-2-await" class="headerlink" title="2.2.2 await()"></a>2.2.2 await()</h4><p><code>await()</code>监视<code>available</code>变量，如果没有新的请求，就进入阻塞状态，同时<code>run()</code>方法也会被阻塞<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">synchronized</span> Socket <span class="title">await</span><span class="params">()</span> </span>&#123;</div><div class="line">    <span class="comment">// Wait for the Connector to provide a new Socket</span></div><div class="line">    <span class="keyword">while</span> (!available) &#123;</div><div class="line">        <span class="keyword">try</span> &#123;</div><div class="line">            wait();</div><div class="line">        &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    <span class="comment">// Notify the Connector that we have received this Socket</span></div><div class="line">    Socket socket = <span class="keyword">this</span>.socket;</div><div class="line">    available = <span class="keyword">false</span>;</div><div class="line">    notifyAll();</div><div class="line">    <span class="keyword">if</span> ((debug &gt;= <span class="number">1</span>) &amp;&amp; (socket != <span class="keyword">null</span>))</div><div class="line">        log(<span class="string">"  The incoming request has been awaited"</span>);</div><div class="line">    <span class="keyword">return</span> (socket);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h4 id="2-2-3-assign-Socket-socket"><a href="#2-2-3-assign-Socket-socket" class="headerlink" title="2.2.3 assign(Socket socket)"></a>2.2.3 assign(Socket socket)</h4><p>连接器调用<code>assign</code>方法分配请求，它会唤醒阻塞的线程.这实际上是一个生产者-，消费者模型，通过<code>available</code>变量，将请求从连接器传递到处理器。但这个实现并不优雅，并且效率也不高<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div></pre></td><td class="code"><pre><div class="line">    synchronized void assign(Socket socket) &#123;</div><div class="line">        // Wait for the Processor to get the previous Socket</div><div class="line">        while (available) &#123;</div><div class="line">            try &#123;</div><div class="line">                wait();</div><div class="line">            &#125; catch (InterruptedException e) &#123;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        // Store the newly available Socket and notify our thread</div><div class="line">        this.socket = socket;</div><div class="line">        available = true;</div><div class="line">        notifyAll();</div><div class="line">        if ((debug &gt;= 1) &amp;&amp; (socket != null))</div><div class="line">            log(" An incoming request is being assigned");</div><div class="line">    &#125;</div><div class="line">```  </div><div class="line">#### 2.2.4 process(Socket socket)</div><div class="line">`process(Socket socket)`方法对请求进行处理,此处省略了很多</div><div class="line">``` java</div><div class="line">    private void process(Socket socket) &#123;</div><div class="line">        boolean ok = true;</div><div class="line">        boolean finishResponse = true;</div><div class="line">        SocketInputStream input = null;</div><div class="line">        OutputStream output = null;</div><div class="line">        // 构造和初始化需要的对象</div><div class="line">        try &#123;</div><div class="line">            input = new SocketInputStream(socket.getInputStream(),</div><div class="line">                                          connector.getBufferSize());</div><div class="line">        &#125; catch (Exception e) &#123;</div><div class="line">            log("process.create", e);</div><div class="line">            ok = false;</div><div class="line">        &#125;</div><div class="line">        keepAlive = true;</div><div class="line">        while (!stopped &amp;&amp; ok &amp;&amp; keepAlive) &#123;</div><div class="line">            finishResponse = true;</div><div class="line">            try &#123;</div><div class="line">                //此处的request,response是循环利用的</div><div class="line">                request.setStream(input);</div><div class="line">                request.setResponse(response);</div><div class="line">                output = socket.getOutputStream();</div><div class="line">                response.setStream(output);</div><div class="line">                response.setRequest(request);</div><div class="line">                ((HttpServletResponse) response.getResponse()).setHeader</div><div class="line">                    ("Server", SERVER_INFO);</div><div class="line">            &#125; catch (Exception e) &#123;</div><div class="line">                //...</div><div class="line">            &#125;</div><div class="line">            // 解析请求</div><div class="line">            try &#123;</div><div class="line">                if (ok) &#123;</div><div class="line">                    parseConnection(socket);//2.2.5</div><div class="line">                    parseRequest(input, output);//2.2.6</div><div class="line">                    if (!request.getRequest().getProtocol().startsWith("HTTP/0"))</div><div class="line">                        parseHeaders(input);//2.2.8</div><div class="line">                    if (http11) &#123;</div><div class="line">                        // 若在请求头中发现"EXpect:100-continue",则设置sendAck为true</div><div class="line">                        //ackRequest方法检查sendAck的值和是否允许分块，如果为true向客户端发送HTTP/1.1 100 Continue\r\n\r\n</div><div class="line">                        ackRequest(output);</div><div class="line">                        // If the protocol is HTTP/1.1, chunking is allowed.</div><div class="line">                        if (connector.isChunkingAllowed())</div><div class="line">                            response.setAllowChunking(true);</div><div class="line">                    &#125;</div><div class="line">                &#125;</div><div class="line">            &#125; catch (EOFException e) &#123;</div><div class="line">                //很可能client或server中的一方断开连接</div><div class="line">                ok = false;</div><div class="line">                finishResponse = false;</div><div class="line">            &#125; catch (ServletException e) &#123;</div><div class="line">                //...</div><div class="line">            &#125; catch (InterruptedIOException e) &#123;</div><div class="line">                //...</div><div class="line">            &#125; catch (Exception e) &#123;</div><div class="line">                //...</div><div class="line">            &#125;</div><div class="line">            try &#123;</div><div class="line">                ((HttpServletResponse) response).setHeader("Date", FastHttpDateFormat.getCurrentDate());</div><div class="line">                if (ok) &#123;</div><div class="line">                    connector.getContainer().invoke(request, response);//如果处理正常调用容器的invoke方法</div><div class="line">                &#125;</div><div class="line">            &#125; catch (ServletException e) &#123;</div><div class="line">                //...</div><div class="line">            &#125; catch (InterruptedIOException e) &#123;</div><div class="line">                //...</div><div class="line">            &#125; catch (Throwable e) &#123;</div><div class="line">                //...</div><div class="line">            &#125;</div><div class="line">            // 完成处理请求</div><div class="line">            if (finishResponse) &#123;</div><div class="line">                //省略...</div><div class="line">                //主要是调用response.finishResponse();</div><div class="line">            &#125;</div><div class="line">            //必须检查Connection是否被设置为close或者在HTTP/1.0下</div><div class="line">            if ( "close".equals(response.getHeader("Connection")) ) &#123;</div><div class="line">                keepAlive = false;</div><div class="line">            &#125;</div><div class="line">            // 如果keepAlive为true并且解析没有发生错误，则继续while循环</div><div class="line">            status = Constants.PROCESSOR_IDLE;</div><div class="line">            // 回收request和response对象</div><div class="line">            request.recycle();</div><div class="line">            response.recycle();</div><div class="line">        &#125;</div><div class="line">        try &#123;</div><div class="line">            shutdownInput(input);</div><div class="line">            socket.close();</div><div class="line">        &#125; catch (IOException e) &#123;</div><div class="line">            //...</div><div class="line">        &#125; catch (Throwable e) &#123;</div><div class="line">            //...</div><div class="line">        &#125;</div><div class="line">        socket = null;</div><div class="line">    &#125;</div></pre></td></tr></table></figure></p>
+<h4 id="2-2-5-parseConnection-Socket-socket"><a href="#2-2-5-parseConnection-Socket-socket" class="headerlink" title="2.2.5 parseConnection(Socket socket)"></a>2.2.5 parseConnection(Socket socket)</h4><p>解析连接信息，获取Internet地址，检查是否使用代理<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">parseConnection</span><span class="params">(Socket socket)</span></span></div><div class="line">    <span class="keyword">throws</span> IOException, ServletException &#123;</div><div class="line">    <span class="keyword">if</span> (debug &gt;= <span class="number">2</span>)</div><div class="line">        log(<span class="string">"  parseConnection: address="</span> + socket.getInetAddress() +</div><div class="line">            <span class="string">", port="</span> + connector.getPort());</div><div class="line">    ((HttpRequestImpl) request).setInet(socket.getInetAddress());</div><div class="line">    <span class="keyword">if</span> (proxyPort != <span class="number">0</span>)</div><div class="line">        request.setServerPort(proxyPort);</div><div class="line">    <span class="keyword">else</span></div><div class="line">        request.setServerPort(serverPort);</div><div class="line">    request.setSocket(socket);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h4 id="2-2-6-parseRequest-SocketInputStream-input-OutputStream-output"><a href="#2-2-6-parseRequest-SocketInputStream-input-OutputStream-output" class="headerlink" title="2.2.6 parseRequest(SocketInputStream input, OutputStream output)"></a>2.2.6 parseRequest(SocketInputStream input, OutputStream output)</h4><p><code>requestLine</code>是一个<code>HttpRequest</code>实例，其中包含3个<code>char[]</code>,分别对应method,uri,protocol.调用<code>SocketInputStream</code>的<code>readRequestLine()</code>方法填充请求行，再获得对应的请求方法，URI,协议版本，(查询参数,session ID)<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">parseRequest</span><span class="params">(SocketInputStream input, OutputStream output)</span></span></div><div class="line">    <span class="keyword">throws</span> IOException, ServletException &#123;</div><div class="line">    <span class="comment">// 解析请求行</span></div><div class="line">    input.readRequestLine(requestLine);<span class="comment">//2.2.7</span></div><div class="line">    status = Constants.PROCESSOR_ACTIVE;</div><div class="line">    String method = <span class="keyword">new</span> String(requestLine.method, <span class="number">0</span>, requestLine.methodEnd);<span class="comment">//获得请求方法</span></div><div class="line">    String uri = <span class="keyword">null</span>;</div><div class="line">    String protocol = <span class="keyword">new</span> String(requestLine.protocol, <span class="number">0</span>, requestLine.protocolEnd);<span class="comment">//获得协议版本信息</span></div><div class="line">    <span class="keyword">if</span> (protocol.length() == <span class="number">0</span>)</div><div class="line">        protocol = <span class="string">"HTTP/0.9"</span>;</div><div class="line">    <span class="comment">// 如果是HTTP/1.1需要在解析请求后保持连接</span></div><div class="line">    <span class="keyword">if</span> ( protocol.equals(<span class="string">"HTTP/1.1"</span>) ) &#123;</div><div class="line">        http11 = <span class="keyword">true</span>;</div><div class="line">        sendAck = <span class="keyword">false</span>;</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">        http11 = <span class="keyword">false</span>;</div><div class="line">        sendAck = <span class="keyword">false</span>;</div><div class="line">        <span class="comment">// 对于HTTP/1.0, 默认不保持连接，除非指定Connection:Keep-Alive</span></div><div class="line">        keepAlive = <span class="keyword">false</span>;</div><div class="line">    &#125;</div><div class="line">    <span class="comment">// 验证请求行</span></div><div class="line">    <span class="keyword">if</span> (method.length() &lt; <span class="number">1</span>) &#123;</div><div class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> ServletException(sm.getString(<span class="string">"httpProcessor.parseRequest.method"</span>));</div><div class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (requestLine.uriEnd &lt; <span class="number">1</span>) &#123;</div><div class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> ServletException(sm.getString(<span class="string">"httpProcessor.parseRequest.uri"</span>));</div><div class="line">    &#125;</div><div class="line">    <span class="comment">// 解析URI上的查询参数</span></div><div class="line">    <span class="keyword">int</span> question = requestLine.indexOf(<span class="string">"?"</span>);</div><div class="line">    <span class="keyword">if</span> (question &gt;= <span class="number">0</span>) &#123;</div><div class="line">        request.setQueryString(<span class="keyword">new</span> String(requestLine.uri, question + <span class="number">1</span>,requestLine.uriEnd - question - <span class="number">1</span>));<span class="comment">//设置查询参数</span></div><div class="line">        <span class="keyword">if</span> (debug &gt;= <span class="number">1</span>)</div><div class="line">            log(<span class="string">" Query string is "</span> +</div><div class="line">                ((HttpServletRequest) request.getRequest())</div><div class="line">                .getQueryString());</div><div class="line">        uri = <span class="keyword">new</span> String(requestLine.uri, <span class="number">0</span>, question);<span class="comment">//获得URI</span></div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">        request.setQueryString(<span class="keyword">null</span>);</div><div class="line">        uri = <span class="keyword">new</span> String(requestLine.uri, <span class="number">0</span>, requestLine.uriEnd);</div><div class="line">    &#125;</div><div class="line">    <span class="comment">// Checking for an absolute URI (with the HTTP protocol)</span></div><div class="line">    <span class="comment">//检验绝对URI路径和HTTP协议</span></div><div class="line">    <span class="keyword">if</span> (!uri.startsWith(<span class="string">"/"</span>)) &#123;</div><div class="line">        <span class="keyword">int</span> pos = uri.indexOf(<span class="string">"://"</span>);</div><div class="line">        <span class="comment">// 解析协议和主机名</span></div><div class="line">        <span class="keyword">if</span> (pos != -<span class="number">1</span>) &#123;</div><div class="line">            pos = uri.indexOf(<span class="string">'/'</span>, pos + <span class="number">3</span>);</div><div class="line">            <span class="keyword">if</span> (pos == -<span class="number">1</span>) &#123;</div><div class="line">                uri = <span class="string">""</span>;</div><div class="line">            &#125; <span class="keyword">else</span> &#123;</div><div class="line">                uri = uri.substring(pos);</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    <span class="comment">// 从请求URI解析session ID</span></div><div class="line">    <span class="keyword">int</span> semicolon = uri.indexOf(match);<span class="comment">//match=";jsessionid="0</span></div><div class="line">    <span class="keyword">if</span> (semicolon &gt;= <span class="number">0</span>) &#123;</div><div class="line">        String rest = uri.substring(semicolon + match.length());</div><div class="line">        <span class="keyword">int</span> semicolon2 = rest.indexOf(<span class="string">';'</span>);</div><div class="line">        <span class="keyword">if</span> (semicolon2 &gt;= <span class="number">0</span>) &#123;</div><div class="line">            request.setRequestedSessionId(rest.substring(<span class="number">0</span>, semicolon2));<span class="comment">//设置session ID</span></div><div class="line">            rest = rest.substring(semicolon2);</div><div class="line">        &#125; <span class="keyword">else</span> &#123;</div><div class="line">            request.setRequestedSessionId(rest);</div><div class="line">            rest = <span class="string">""</span>;</div><div class="line">        &#125;</div><div class="line">        request.setRequestedSessionURL(<span class="keyword">true</span>);</div><div class="line">        uri = uri.substring(<span class="number">0</span>, semicolon) + rest;</div><div class="line">        <span class="keyword">if</span> (debug &gt;= <span class="number">1</span>)</div><div class="line">            log(<span class="string">" Requested URL session id is "</span> +</div><div class="line">                ((HttpServletRequest) request.getRequest())</div><div class="line">                .getRequestedSessionId());</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">        request.setRequestedSessionId(<span class="keyword">null</span>);</div><div class="line">        request.setRequestedSessionURL(<span class="keyword">false</span>);</div><div class="line">    &#125;</div><div class="line">    <span class="comment">//修正RUI(使用字符串操作)</span></div><div class="line">    String normalizedUri = normalize(uri);</div><div class="line">    <span class="keyword">if</span> (debug &gt;= <span class="number">1</span>) log(<span class="string">"Normalized: '"</span> + uri + <span class="string">"' to '"</span> + normalizedUri + <span class="string">"'"</span>);</div><div class="line">    <span class="comment">// 设置请求属性</span></div><div class="line">    ((HttpRequest) request).setMethod(method);<span class="comment">//设置请求方法</span></div><div class="line">    request.setProtocol(protocol);<span class="comment">//设置协议版本</span></div><div class="line">    <span class="keyword">if</span> (normalizedUri != <span class="keyword">null</span>) &#123;</div><div class="line">        ((HttpRequest) request).setRequestURI(normalizedUri);</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">        ((HttpRequest) request).setRequestURI(uri);</div><div class="line">    &#125;</div><div class="line">    request.setSecure(connector.getSecure());</div><div class="line">    request.setScheme(connector.getScheme());</div><div class="line">    <span class="keyword">if</span> (normalizedUri == <span class="keyword">null</span>) &#123;</div><div class="line">        log(<span class="string">" Invalid request URI: '"</span> + uri + <span class="string">"'"</span>);</div><div class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> ServletException(<span class="string">"Invalid URI: "</span> + uri + <span class="string">"'"</span>);</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">if</span> (debug &gt;= <span class="number">1</span>)</div><div class="line">        log(<span class="string">" Request is '"</span> + method + <span class="string">"' for '"</span> + uri +</div><div class="line">            <span class="string">"' with protocol '"</span> + protocol + <span class="string">"'"</span>);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h4 id="2-2-7-readRequestLine-HttpRequestLine-requestLine"><a href="#2-2-7-readRequestLine-HttpRequestLine-requestLine" class="headerlink" title="2.2.7 readRequestLine(HttpRequestLine requestLine)"></a>2.2.7 readRequestLine(HttpRequestLine requestLine)</h4><p><code>readRequestLine</code>方法会分别填充请求行,URI,协议版本<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">readRequestLine</span><span class="params">(HttpRequestLine requestLine)</span></span></div><div class="line">    <span class="keyword">throws</span> IOException &#123;</div><div class="line">    <span class="comment">// 检查是否已回收</span></div><div class="line">    <span class="keyword">if</span> (requestLine.methodEnd != <span class="number">0</span>)</div><div class="line">        requestLine.recycle();</div><div class="line">    <span class="comment">// 检查空白行</span></div><div class="line">    <span class="keyword">int</span> chr = <span class="number">0</span>;</div><div class="line">    <span class="keyword">do</span> &#123; <span class="comment">// 跳过 CR(\r) 或 LF(\n)</span></div><div class="line">        <span class="keyword">try</span> &#123;</div><div class="line">            chr = read();</div><div class="line">        &#125; <span class="keyword">catch</span> (IOException e) &#123;</div><div class="line">            chr = -<span class="number">1</span>;</div><div class="line">        &#125;</div><div class="line">    &#125; <span class="keyword">while</span> ((chr == CR) || (chr == LF));</div><div class="line">    <span class="keyword">if</span> (chr == -<span class="number">1</span>)</div><div class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> EOFException (sm.getString(<span class="string">"requestStream.readline.error"</span>));</div><div class="line">    pos--;</div><div class="line">    <span class="comment">// 读取方法名</span></div><div class="line">    <span class="keyword">int</span> maxRead = requestLine.method.length;<span class="comment">//这里的char[]数组的长度为8</span></div><div class="line">    <span class="keyword">int</span> readStart = pos;</div><div class="line">    <span class="keyword">int</span> readCount = <span class="number">0</span>;</div><div class="line">    <span class="keyword">boolean</span> space = <span class="keyword">false</span>;</div><div class="line">    <span class="comment">//读取到空格说明方法名已解析完成</span></div><div class="line">    <span class="keyword">while</span> (!space) &#123;</div><div class="line">        <span class="comment">// 如果char[]已满，将容量翻倍</span></div><div class="line">        <span class="keyword">if</span> (readCount &gt;= maxRead) &#123;</div><div class="line">            <span class="keyword">if</span> ((<span class="number">2</span> * maxRead) &lt;= HttpRequestLine.MAX_METHOD_SIZE) &#123;</div><div class="line">                <span class="keyword">char</span>[] newBuffer = <span class="keyword">new</span> <span class="keyword">char</span>[<span class="number">2</span> * maxRead];</div><div class="line">                System.arraycopy(requestLine.method, <span class="number">0</span>, newBuffer, <span class="number">0</span>,</div><div class="line">                                 maxRead);</div><div class="line">                requestLine.method = newBuffer;</div><div class="line">                maxRead = requestLine.method.length;</div><div class="line">            &#125; <span class="keyword">else</span> &#123;</div><div class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> IOException</div><div class="line">                    (sm.getString(<span class="string">"requestStream.readline.toolong"</span>));</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        <span class="comment">// 检查是否读取到末尾</span></div><div class="line">        <span class="keyword">if</span> (pos &gt;= count) &#123;</div><div class="line">            <span class="keyword">int</span> val = read();</div><div class="line">            <span class="keyword">if</span> (val == -<span class="number">1</span>) &#123;</div><div class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> IOException</div><div class="line">                    (sm.getString(<span class="string">"requestStream.readline.error"</span>));</div><div class="line">            &#125;</div><div class="line">            pos = <span class="number">0</span>;</div><div class="line">            readStart = <span class="number">0</span>;</div><div class="line">        &#125;</div><div class="line">        <span class="comment">// 检查是否读取到空格</span></div><div class="line">        <span class="keyword">if</span> (buf[pos] == SP) &#123;</div><div class="line">            space = <span class="keyword">true</span>;</div><div class="line">        &#125;</div><div class="line">        <span class="comment">//填充char[] method</span></div><div class="line">        requestLine.method[readCount] = (<span class="keyword">char</span>) buf[pos];</div><div class="line">        readCount++;</div><div class="line">        pos++;</div><div class="line">    &#125;</div><div class="line">    requestLine.methodEnd = readCount - <span class="number">1</span>;<span class="comment">//设置请求方法结束位置</span></div><div class="line">    <span class="comment">// 解析URI</span></div><div class="line">    maxRead = requestLine.uri.length;</div><div class="line">    readStart = pos;</div><div class="line">    readCount = <span class="number">0</span>;</div><div class="line">    space = <span class="keyword">false</span>;</div><div class="line">    <span class="keyword">boolean</span> eol = <span class="keyword">false</span>;</div><div class="line">    <span class="keyword">while</span> (!space) &#123;</div><div class="line">        <span class="keyword">if</span> (readCount &gt;= maxRead) &#123;</div><div class="line">            <span class="keyword">if</span> ((<span class="number">2</span> * maxRead) &lt;= HttpRequestLine.MAX_URI_SIZE) &#123;</div><div class="line">                <span class="keyword">char</span>[] newBuffer = <span class="keyword">new</span> <span class="keyword">char</span>[<span class="number">2</span> * maxRead];</div><div class="line">                System.arraycopy(requestLine.uri, <span class="number">0</span>, newBuffer, <span class="number">0</span>,</div><div class="line">                                 maxRead);</div><div class="line">                requestLine.uri = newBuffer;</div><div class="line">                maxRead = requestLine.uri.length;</div><div class="line">            &#125; <span class="keyword">else</span> &#123;</div><div class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> IOException(sm.getString(<span class="string">"requestStream.readline.toolong"</span>));</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        <span class="comment">// 检查是否读取到末尾</span></div><div class="line">        <span class="keyword">if</span> (pos &gt;= count) &#123;</div><div class="line">            <span class="keyword">int</span> val = read();</div><div class="line">            <span class="keyword">if</span> (val == -<span class="number">1</span>)</div><div class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> IOException(sm.getString(<span class="string">"requestStream.readline.error"</span>));</div><div class="line">            pos = <span class="number">0</span>;</div><div class="line">            readStart = <span class="number">0</span>;</div><div class="line">        &#125;</div><div class="line">        <span class="comment">// 检查是否读取到空格</span></div><div class="line">        <span class="keyword">if</span> (buf[pos] == SP) &#123;</div><div class="line">            space = <span class="keyword">true</span>;</div><div class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> ((buf[pos] == CR) || (buf[pos] == LF)) &#123;</div><div class="line">            <span class="comment">// HTTP/0.9 风格的请求</span></div><div class="line">            eol = <span class="keyword">true</span>;</div><div class="line">            space = <span class="keyword">true</span>;</div><div class="line">        &#125;</div><div class="line">        <span class="comment">//填充 char[] uri</span></div><div class="line">        requestLine.uri[readCount] = (<span class="keyword">char</span>) buf[pos];</div><div class="line">        readCount++;</div><div class="line">        pos++;</div><div class="line">    &#125;</div><div class="line">    requestLine.uriEnd = readCount - <span class="number">1</span>;<span class="comment">//设置uri结束位置</span></div><div class="line">    <span class="comment">// 解析协议</span></div><div class="line">    maxRead = requestLine.protocol.length;</div><div class="line">    readStart = pos;</div><div class="line">    readCount = <span class="number">0</span>;</div><div class="line">    <span class="comment">//是否结束</span></div><div class="line">    <span class="keyword">while</span> (!eol) &#123;</div><div class="line">        <span class="keyword">if</span> (readCount &gt;= maxRead) &#123;</div><div class="line">            <span class="keyword">if</span> ((<span class="number">2</span> * maxRead) &lt;= HttpRequestLine.MAX_PROTOCOL_SIZE) &#123;</div><div class="line">                <span class="keyword">char</span>[] newBuffer = <span class="keyword">new</span> <span class="keyword">char</span>[<span class="number">2</span> * maxRead];</div><div class="line">                System.arraycopy(requestLine.protocol, <span class="number">0</span>, newBuffer, <span class="number">0</span>,</div><div class="line">                                 maxRead);</div><div class="line">                requestLine.protocol = newBuffer;</div><div class="line">                maxRead = requestLine.protocol.length;</div><div class="line">            &#125; <span class="keyword">else</span> &#123;</div><div class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> IOException(sm.getString(<span class="string">"requestStream.readline.toolong"</span>));</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">         <span class="comment">// 检查是否读取到末尾</span></div><div class="line">        <span class="keyword">if</span> (pos &gt;= count) &#123;</div><div class="line">            <span class="keyword">int</span> val = read();</div><div class="line">            <span class="keyword">if</span> (val == -<span class="number">1</span>)</div><div class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> IOException(sm.getString(<span class="string">"requestStream.readline.error"</span>));</div><div class="line">            pos = <span class="number">0</span>;</div><div class="line">            readStart = <span class="number">0</span>;</div><div class="line">        &#125;</div><div class="line">        <span class="comment">//是否结束</span></div><div class="line">        <span class="keyword">if</span> (buf[pos] == CR) &#123;</div><div class="line">            <span class="comment">// 跳过\r</span></div><div class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (buf[pos] == LF) &#123;</div><div class="line">            eol = <span class="keyword">true</span>;</div><div class="line">        &#125; <span class="keyword">else</span> &#123;</div><div class="line">            <span class="comment">//填充char[] protocol</span></div><div class="line">            requestLine.protocol[readCount] = (<span class="keyword">char</span>) buf[pos];</div><div class="line">            readCount++;</div><div class="line">        &#125;</div><div class="line">        pos++;</div><div class="line">    &#125;</div><div class="line">    requestLine.protocolEnd = readCount;<span class="comment">//设置协议版本结束位置</span></div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h4 id="2-2-8-parseHeaders-SocketInputStream-input"><a href="#2-2-8-parseHeaders-SocketInputStream-input" class="headerlink" title="2.2.8 parseHeaders(SocketInputStream input)"></a>2.2.8 parseHeaders(SocketInputStream input)</h4><p>一个<code>HttpHeader</code>包含一个name数组和value数组,通过<code>SocketInputStream</code>中的<code>readHeader</code>方法填充<code>HttpHeader</code>对象，整个过程和<code>readRequestLine</code>类似.<br>通过<code>HttpHeader</code>对象，设置request对象对应的属性<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div><div class="line">137</div><div class="line">138</div><div class="line">139</div><div class="line">140</div><div class="line">141</div><div class="line">142</div><div class="line">143</div><div class="line">144</div><div class="line">145</div><div class="line">146</div><div class="line">147</div><div class="line">148</div><div class="line">149</div><div class="line">150</div><div class="line">151</div><div class="line">152</div><div class="line">153</div><div class="line">154</div><div class="line">155</div><div class="line">156</div><div class="line">157</div><div class="line">158</div><div class="line">159</div><div class="line">160</div><div class="line">161</div><div class="line">162</div><div class="line">163</div><div class="line">164</div><div class="line">165</div><div class="line">166</div><div class="line">167</div><div class="line">168</div><div class="line">169</div><div class="line">170</div><div class="line">171</div><div class="line">172</div><div class="line">173</div><div class="line">174</div><div class="line">175</div><div class="line">176</div><div class="line">177</div><div class="line">178</div><div class="line">179</div><div class="line">180</div><div class="line">181</div><div class="line">182</div><div class="line">183</div><div class="line">184</div></pre></td><td class="code"><pre><div class="line">    private void parseHeaders(SocketInputStream input)</div><div class="line">        throws IOException, ServletException &#123;</div><div class="line">        while (true) &#123;</div><div class="line">            HttpHeader header = request.allocateHeader();//分配一个HttpHeader对象，从对象池中</div><div class="line">            // 解析请求头</div><div class="line">            input.readHeader(header);</div><div class="line">            if (header.nameEnd == 0) &#123;</div><div class="line">                if (header.valueEnd == 0) &#123;</div><div class="line">                    return;</div><div class="line">                &#125; else &#123;</div><div class="line">                    throw new ServletException</div><div class="line">                        (sm.getString("httpProcessor.parseHeaders.colon"));</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">            String value = new String(header.value, 0, header.valueEnd);//获得value值</div><div class="line">            if (debug &gt;= 1)</div><div class="line">                log(" Header " + new String(header.name, 0, header.nameEnd)+ " = " + value);</div><div class="line">            // 设置对应的请求头</div><div class="line">            if (header.equals(DefaultHeaders.AUTHORIZATION_NAME)) &#123;//authorization头</div><div class="line">                request.setAuthorization(value);</div><div class="line">            &#125; else if (header.equals(DefaultHeaders.ACCEPT_LANGUAGE_NAME)) &#123;//accept-language头</div><div class="line">                parseAcceptLanguage(value);</div><div class="line">            &#125; else if (header.equals(DefaultHeaders.COOKIE_NAME)) &#123;//cookie头</div><div class="line">                Cookie cookies[] = RequestUtil.parseCookieHeader(value);//将value解析成Cookie数组</div><div class="line">                for (int i = 0; i &lt; cookies.length; i++) &#123;</div><div class="line">                    if (cookies[i].getName().equals</div><div class="line">                        (Globals.SESSION_COOKIE_NAME)) &#123;//判断cookie名是否为JSESSIONID</div><div class="line">                        if (!request.isRequestedSessionIdFromCookie()) &#123;</div><div class="line">                            // 只接受第一个session ID</div><div class="line">                            request.setRequestedSessionId(cookies[i].getValue());//设置session ID</div><div class="line">                            request.setRequestedSessionCookie(true);</div><div class="line">                            request.setRequestedSessionURL(false);</div><div class="line">                            if (debug &gt;= 1)</div><div class="line">                                log(" Requested cookie session id is " +</div><div class="line">                                    ((HttpServletRequest) request.getRequest())</div><div class="line">                                    .getRequestedSessionId());</div><div class="line">                        &#125;</div><div class="line">                    &#125;</div><div class="line">                    if (debug &gt;= 1)</div><div class="line">                        log(" Adding cookie " + cookies[i].getName() + "=" +</div><div class="line">                            cookies[i].getValue());</div><div class="line">                    request.addCookie(cookies[i]);//添加cookie到request对象</div><div class="line">                &#125;</div><div class="line">            &#125; else if (header.equals(DefaultHeaders.CONTENT_LENGTH_NAME)) &#123;//content-length头</div><div class="line">                int n = -1;</div><div class="line">                try &#123;</div><div class="line">                    n = Integer.parseInt(value);</div><div class="line">                &#125; catch (Exception e) &#123;</div><div class="line">                    throw new ServletException</div><div class="line">                        (sm.getString("httpProcessor.parseHeaders.contentLength"));</div><div class="line">                &#125;</div><div class="line">                request.setContentLength(n);</div><div class="line">            &#125; else if (header.equals(DefaultHeaders.CONTENT_TYPE_NAME)) &#123;//content-type头</div><div class="line">                request.setContentType(value);</div><div class="line">            &#125; else if (header.equals(DefaultHeaders.HOST_NAME)) &#123;//host头</div><div class="line">                int n = value.indexOf(':');</div><div class="line">                if (n &lt; 0) &#123;</div><div class="line">                    if (connector.getScheme().equals("http")) &#123;</div><div class="line">                        request.setServerPort(80);//设置http协议端口</div><div class="line">                    &#125; else if (connector.getScheme().equals("https")) &#123;</div><div class="line">                        request.setServerPort(443);//设置https协议端口</div><div class="line">                    &#125;</div><div class="line">                    if (proxyName != null)</div><div class="line">                        request.setServerName(proxyName);</div><div class="line">                    else</div><div class="line">                        request.setServerName(value);</div><div class="line">                &#125; else &#123;</div><div class="line">                    if (proxyName != null)</div><div class="line">                        request.setServerName(proxyName);</div><div class="line">                    else</div><div class="line">                        request.setServerName(value.substring(0, n).trim());</div><div class="line">                    if (proxyPort != 0)</div><div class="line">                        request.setServerPort(proxyPort);</div><div class="line">                    else &#123;</div><div class="line">                        int port = 80;</div><div class="line">                        try &#123;</div><div class="line">                            port =Integer.parseInt(value.substring(n+1).trim());</div><div class="line">                        &#125; catch (Exception e) &#123;</div><div class="line">                            throw new ServletException</div><div class="line">                                (sm.getString("httpProcessor.parseHeaders.portNumber"));</div><div class="line">                        &#125;</div><div class="line">                        request.setServerPort(port);</div><div class="line">                    &#125;</div><div class="line">                &#125;</div><div class="line">            &#125; else if (header.equals(DefaultHeaders.CONNECTION_NAME)) &#123;//connection头</div><div class="line">                if (header.valueEquals(DefaultHeaders.CONNECTION_CLOSE_VALUE)) &#123;//close值</div><div class="line">                    keepAlive = false;</div><div class="line">                    response.setHeader("Connection", "close");</div><div class="line">                &#125;</div><div class="line">            &#125; else if (header.equals(DefaultHeaders.EXPECT_NAME)) &#123;//expect头</div><div class="line">                if (header.valueEquals(DefaultHeaders.EXPECT_100_VALUE))//100-continue值</div><div class="line">                    sendAck = true;</div><div class="line">                else</div><div class="line">                    throw new ServletException</div><div class="line">                        (sm.getString("httpProcessor.parseHeaders.unknownExpectation"));</div><div class="line">            &#125; else if (header.equals(DefaultHeaders.TRANSFER_ENCODING_NAME)) &#123;//transfer-encoding头</div><div class="line">                //request.setTransferEncoding(header);</div><div class="line">            &#125;</div><div class="line">            request.nextHeader();//读取下一个请求头</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">```   </div><div class="line">### 2.3 Request对象</div><div class="line">在调用`getParameter`,`getParameterMap`,`getParameterNames`,`getParameterValues`时会先调用`parseParameters`方法解析请求参数</div><div class="line"></div><div class="line">#### 2.3.1 parseParameters()</div><div class="line">`parseParameters`方法将解析结果放入`ParameterMap`对象中;`ParameterMap`基础自`HashMap`,添加了锁定属性，当被锁定时不允许修改</div><div class="line">``` java</div><div class="line">    protected void parseParameters() &#123;</div><div class="line">        if (parsed)//如果已解析直接返回</div><div class="line">            return;</div><div class="line">        ParameterMap results = parameters;//初始化ParameterMap对象</div><div class="line">        if (results == null)</div><div class="line">            results = new ParameterMap();</div><div class="line">        results.setLocked(false);//解除锁定</div><div class="line">        String encoding = getCharacterEncoding();//获得编码信息</div><div class="line">        if (encoding == null) encoding = "ISO-8859-1";//默认编码</div><div class="line">        // 解析查询字符串中的参数</div><div class="line">        String queryString = getQueryString();</div><div class="line">        try &#123;</div><div class="line">            RequestUtil.parseParameters(results, queryString, encoding);//解析查询字符串</div><div class="line">        &#125; catch (UnsupportedEncodingException e) &#123;</div><div class="line">            ;</div><div class="line">        &#125;</div><div class="line">        // 从正文中的参数</div><div class="line">        String contentType = getContentType();</div><div class="line">        if (contentType == null)</div><div class="line">            contentType = "";</div><div class="line">        int semicolon = contentType.indexOf(';');</div><div class="line">        if (semicolon &gt;= 0) &#123;</div><div class="line">            contentType = contentType.substring(0, semicolon).trim();</div><div class="line">        &#125; else &#123;</div><div class="line">            contentType = contentType.trim();</div><div class="line">        &#125;</div><div class="line">        if ("POST".equals(getMethod()) &amp;&amp; (getContentLength() &gt; 0)&amp;&amp; (this.stream == null)</div><div class="line">            &amp;&amp; "application/x-www-form-urlencoded".equals(contentType)) &#123;</div><div class="line">            //判断条件:POST方法,content-length&gt;0,有ServletInputStream,content-type=application/x-www-form-urlencoded</div><div class="line">            try &#123;</div><div class="line">                int max = getContentLength();</div><div class="line">                int len = 0;</div><div class="line">                byte buf[] = new byte[getContentLength()];</div><div class="line">                ServletInputStream is = getInputStream();</div><div class="line">                while (len &lt; max) &#123;//读取数据</div><div class="line">                    int next = is.read(buf, len, max - len);</div><div class="line">                    if (next &lt; 0 ) &#123;</div><div class="line">                        break;</div><div class="line">                    &#125;</div><div class="line">                    len += next;</div><div class="line">                &#125;</div><div class="line">                is.close();</div><div class="line">                if (len &lt; max) &#123;</div><div class="line">                    //FIX ME,当实际接收长度小于content-length声明的长度时</div><div class="line">                    //上面的代码中检查next=-1可以预防出现死循环</div><div class="line">                    //但是这个bug必须在mod_jk模块中</div><div class="line">                    //记录额外的信息用于debug mod_jk</div><div class="line">                    StringBuffer msg = new StringBuffer();</div><div class="line">                    msg.append("HttpRequestBase.parseParameters content length mismatch\n");</div><div class="line">                    msg.append("  URL: ");</div><div class="line">                    msg.append(getRequestURL());</div><div class="line">                    msg.append(" Content Length: ");</div><div class="line">                    msg.append(max);</div><div class="line">                    msg.append(" Read: ");</div><div class="line">                    msg.append(len);</div><div class="line">                    msg.append("\n  Bytes Read: ");</div><div class="line">                    if ( len &gt; 0 ) &#123;</div><div class="line">                        msg.append(new String(buf,0,len));</div><div class="line">                    &#125;</div><div class="line">                    log(msg.toString());</div><div class="line">                    throw new RuntimeException</div><div class="line">                        (sm.getString("httpRequestBase.contentLengthMismatch"));</div><div class="line">                &#125;</div><div class="line">                RequestUtil.parseParameters(results, buf, encoding);//解析参数</div><div class="line">            &#125; catch (UnsupportedEncodingException ue) &#123;</div><div class="line">                ;</div><div class="line">            &#125; catch (IOException e) &#123;</div><div class="line">                throw new RuntimeException</div><div class="line">                        (sm.getString("httpRequestBase.contentReadFail") + </div><div class="line">                         e.getMessage());</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        results.setLocked(true);</div><div class="line">        parsed = true;</div><div class="line">        parameters = results;</div><div class="line">    &#125;</div></pre></td></tr></table></figure></p>
+<p>至此整个HTTP协议的解析流程就完成了</p>
+<h1 id="3-总结"><a href="#3-总结" class="headerlink" title="3. 总结"></a>3. 总结</h1><ul>
+<li>连接器负责接收请求,处理器负责解析请求,每个处理器拥有自己的Request和Response对象,这两个对象可以重复使用</li>
+<li>处理器处理流程<ol>
+<li>解析连接信息:设置Internet地址和代理信息</li>
+<li>解析请求行:请求方法,URI,协议版本，查询参数(如果有),keep-alive属性,session ID(如果禁用了cookie),标准化URI地址</li>
+<li>解析请求头:将请求头设置到对应的属性中,其中有几个重要的属性,cookie,content-length和content-type(在处理正文时会用到),conection(主要检查是否close值)</li>
+<li>解析参数:先解析URI中的查询参数,再解析正文中的参数</li>
+<li>调用容器的invoke方法</li>
+</ol>
+</li>
+</ul>
+<hr>
+<p>PS:<br>看完Tomcat如何解析才发现自己对HTTP协议不了解,只考虑到了HTTP协议的格式,没有考虑到不同版本的区别,特殊请求头的处理,不同请求方法的处理,cookie的解析,session的处理。<br>随着HTTP协议的发展,解析的难度越来越大,要求也越来越高(高效+正确);以上的代码在Tomcat4中已经废弃，换了更高效的连接器.等有时间去看一下Tomcat8的源码</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Tomcat/" rel="tag"># Tomcat</a>
+          
+            <a href="/tags/HTTP/" rel="tag"># HTTP</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/spring-mvc-three/" rel="next" title="Spring MVC系列(三) 基于注解的权限控制">
+                <i class="fa fa-chevron-left"></i> Spring MVC系列(三) 基于注解的权限控制
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/spring-aop-one/" rel="prev" title="Spring AOP浅析(一) 代理模式及实现">
+                Spring AOP浅析(一) 代理模式及实现 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2016/tomcat-src-one/" data-title="Spring MVC系列(二) 忘记密码功能实现" data-content="" data-url="http://magicwolf.xyz/2016/tomcat-src-one/">
+  <div class="ds-share-inline">
+    <ul class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qq" href="javascript:void(0);" data-service="qq">QQ</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/tomcat-src-one/" data-title="Spring MVC系列(二) 忘记密码功能实现" data-url="http://magicwolf.xyz/2016/tomcat-src-one/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image" src="/images/avatar.png" alt="MagicWolf">
+          <p class="site-author-name" itemprop="name">MagicWolf</p>
+          <p class="site-description motion-element" itemprop="description">在代码中享受创造的乐趣~</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">6</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+              <div class="site-state-item site-state-categories">
+                  <a href="/categories">
+                      <span class="site-state-item-count">2</span>
+                      <span class="site-state-item-name">分类</span>
+                  </a>
+              </div>
+          
+          
+          
+              <div class="site-state-item site-state-tags">
+                  <a href="/tags">
+                      <span class="site-state-item-count">6</span>
+                      <span class="site-state-item-name">标签</span>
+                  </a>
+              </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/DaiDongLiang" target="_blank" title="GitHub" rel="external nofollow noopener noreferrer">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Tomcat源码分析-一-：HTTP协议解析"><span class="nav-number">1.</span> <span class="nav-text">Tomcat源码分析(一)：HTTP协议解析</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-环境说明"><span class="nav-number">1.1.</span> <span class="nav-text">1. 环境说明</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-源码分析"><span class="nav-number">1.2.</span> <span class="nav-text">2. 源码分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-连接器"><span class="nav-number">1.2.1.</span> <span class="nav-text">2.1 连接器</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-1-run"><span class="nav-number">1.2.1.1.</span> <span class="nav-text">2.1.1 run()</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-2-createProcessor"><span class="nav-number">1.2.1.2.</span> <span class="nav-text">2.1.2 createProcessor()</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-处理器"><span class="nav-number">1.2.2.</span> <span class="nav-text">2.2 处理器</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-1-run"><span class="nav-number">1.2.2.1.</span> <span class="nav-text">2.2.1 run()</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-2-await"><span class="nav-number">1.2.2.2.</span> <span class="nav-text">2.2.2 await()</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-3-assign-Socket-socket"><span class="nav-number">1.2.2.3.</span> <span class="nav-text">2.2.3 assign(Socket socket)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-5-parseConnection-Socket-socket"><span class="nav-number">1.2.2.4.</span> <span class="nav-text">2.2.5 parseConnection(Socket socket)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-6-parseRequest-SocketInputStream-input-OutputStream-output"><span class="nav-number">1.2.2.5.</span> <span class="nav-text">2.2.6 parseRequest(SocketInputStream input, OutputStream output)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-7-readRequestLine-HttpRequestLine-requestLine"><span class="nav-number">1.2.2.6.</span> <span class="nav-text">2.2.7 readRequestLine(HttpRequestLine requestLine)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-8-parseHeaders-SocketInputStream-input"><span class="nav-number">1.2.2.7.</span> <span class="nav-text">2.2.8 parseHeaders(SocketInputStream input)</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#3-总结"><span class="nav-number">2.</span> <span class="nav-text">3. 总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">MagicWolf</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io" rel="external nofollow noopener noreferrer" target="_blank">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next" rel="external nofollow noopener noreferrer" target="_blank">
+    NexT.Pisces
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/jquery/2.1.3/jquery.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/jquery_lazyload/1.9.7/jquery.lazyload.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/velocity/1.2.1/velocity.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/velocity/1.2.1/velocity.ui.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"magicalwolf"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    
+    <script src="//cdn.jsdelivr.net/ua-parser.js/0.7.10/ua-parser.min.js"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("knVPNUlwucTQYXEmwa1tLDU2-gzGzoHsz", "w0xPFXzCBO1n84n7YJvXOVCS");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+
+</body>
+</html>
