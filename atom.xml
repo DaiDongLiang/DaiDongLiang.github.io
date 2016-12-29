@@ -405,9 +405,9 @@
       <category term="Java" scheme="http://magicwolf.xyz/categories/Java/"/>
     
     
-      <category term="AOP" scheme="http://magicwolf.xyz/tags/AOP/"/>
-    
       <category term="Spring MVC" scheme="http://magicwolf.xyz/tags/Spring-MVC/"/>
+    
+      <category term="AOP" scheme="http://magicwolf.xyz/tags/AOP/"/>
     
   </entry>
   
