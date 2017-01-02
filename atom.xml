@@ -258,9 +258,9 @@
     <link href="http://magicwolf.xyz/2016/spring-mvc-two/"/>
     <id>http://magicwolf.xyz/2016/spring-mvc-two/</id>
     <published>2016-04-28T16:00:00.000Z</published>
-    <updated>2016-12-28T12:59:22.787Z</updated>
+    <updated>2017-01-02T13:55:09.084Z</updated>
     
-    <content type="html"><![CDATA[<p>最近为认证系统添加了忘记密码功能，使用了Spring提供的邮件API和Ehchace缓存验证码。整个过程还是挺有趣，值得写一下。</p>
+    <content type="html"><![CDATA[<p>最近为认证系统添加了忘记密码功能，使用了Spring提供的邮件API和Ehcache缓存验证码。整个过程还是挺有趣，值得写一下。</p>
 <h2 id="Spring邮件API"><a href="#Spring邮件API" class="headerlink" title="Spring邮件API"></a>Spring邮件API</h2><p>Sprin提供了一个强大方便的邮件API,简化了发送邮件的工作。可以发送富文本邮件，添加附件，使用模板渲染邮件内容。推荐看<strong>Spring实战(第三版)</strong>，这里只简单讲一下如何发送富文本邮件，其他的就不细讲了。</p>
 <h3 id="配置邮件发送器"><a href="#配置邮件发送器" class="headerlink" title="配置邮件发送器"></a>配置邮件发送器</h3><p>Spring邮件API的核心是<code>MailSender</code>接口，Spring自带<code>JavaMailSenderImpl</code>实现了<code>MailSender</code>接口，所以需要将<code>JavaMailSenderImpl</code>装配到容器中。</p>
 <a id="more"></a>
@@ -296,7 +296,7 @@
     
     <summary type="html">
     
-      &lt;p&gt;最近为认证系统添加了忘记密码功能，使用了Spring提供的邮件API和Ehchace缓存验证码。整个过程还是挺有趣，值得写一下。&lt;/p&gt;
+      &lt;p&gt;最近为认证系统添加了忘记密码功能，使用了Spring提供的邮件API和Ehcache缓存验证码。整个过程还是挺有趣，值得写一下。&lt;/p&gt;
 &lt;h2 id=&quot;Spring邮件API&quot;&gt;&lt;a href=&quot;#Spring邮件API&quot; class=&quot;headerlink&quot; title=&quot;Spring邮件API&quot;&gt;&lt;/a&gt;Spring邮件API&lt;/h2&gt;&lt;p&gt;Sprin提供了一个强大方便的邮件API,简化了发送邮件的工作。可以发送富文本邮件，添加附件，使用模板渲染邮件内容。推荐看&lt;strong&gt;Spring实战(第三版)&lt;/strong&gt;，这里只简单讲一下如何发送富文本邮件，其他的就不细讲了。&lt;/p&gt;
 &lt;h3 id=&quot;配置邮件发送器&quot;&gt;&lt;a href=&quot;#配置邮件发送器&quot; class=&quot;headerlink&quot; title=&quot;配置邮件发送器&quot;&gt;&lt;/a&gt;配置邮件发送器&lt;/h3&gt;&lt;p&gt;Spring邮件API的核心是&lt;code&gt;MailSender&lt;/code&gt;接口，Spring自带&lt;code&gt;JavaMailSenderImpl&lt;/code&gt;实现了&lt;code&gt;MailSender&lt;/code&gt;接口，所以需要将&lt;code&gt;JavaMailSenderImpl&lt;/code&gt;装配到容器中。&lt;/p&gt;
     
@@ -405,9 +405,9 @@
       <category term="Java" scheme="http://magicwolf.xyz/categories/Java/"/>
     
     
-      <category term="AOP" scheme="http://magicwolf.xyz/tags/AOP/"/>
-    
       <category term="Spring MVC" scheme="http://magicwolf.xyz/tags/Spring-MVC/"/>
+    
+      <category term="AOP" scheme="http://magicwolf.xyz/tags/AOP/"/>
     
   </entry>
   

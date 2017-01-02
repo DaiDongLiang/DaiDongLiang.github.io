@@ -3,6 +3,28 @@
 
 
     
+  <url>
+    <loc>http://magicwolf.xyz/2016/spring-mvc-two/</loc>
+    <lastmod>2017-01-02T13:55:09.084Z</lastmod>
+    <data>
+        <display>
+        <title>Spring MVC系列(二) 忘记密码功能实现</title>
+        <pubTime>2016-04-28T16:00:00.000Z</pubTime>
+        
+        <tag>Spring MVC</tag>
+         
+        <tag>Ehcache</tag>
+         
+         
+           
+             
+              <breadCrumb title="Java" url="http://magicwolf.xyz/categories/Java/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
     
   <url>
     <loc>http://magicwolf.xyz/2016/tomcat-src-one/</loc>
@@ -71,28 +93,6 @@
 
     
   <url>
-    <loc>http://magicwolf.xyz/2016/spring-mvc-two/</loc>
-    <lastmod>2016-12-28T12:59:22.787Z</lastmod>
-    <data>
-        <display>
-        <title>Spring MVC系列(二) 忘记密码功能实现</title>
-        <pubTime>2016-04-28T16:00:00.000Z</pubTime>
-        
-        <tag>Spring MVC</tag>
-         
-        <tag>Ehcache</tag>
-         
-         
-           
-             
-              <breadCrumb title="Java" url="http://magicwolf.xyz/categories/Java/"/>
-          
-        </display>
-    </data>
-    </url>
-
-    
-  <url>
     <loc>http://magicwolf.xyz/2016/spring-mvc-three/</loc>
     <lastmod>2016-12-28T12:30:05.097Z</lastmod>
     <data>
@@ -120,9 +120,9 @@
         <title>Spring MVC系列（一）利用切面编程进行加密</title>
         <pubTime>2016-04-19T16:00:00.000Z</pubTime>
         
-        <tag>AOP</tag>
-         
         <tag>Spring MVC</tag>
+         
+        <tag>AOP</tag>
          
          
            
